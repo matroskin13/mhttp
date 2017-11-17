@@ -14,22 +14,6 @@ import (
 
 var hostIsNotDefined = errors.New("host is not defined")
 
-func do(host string, method string, httpType string, body []byte) (*mhttp.Response, error) {
-	req, err := mhttp.NewRequest(host, method, httpType)
-
-	if err != nil {
-		return nil, err
-	}
-
-	resp, err := req.Do(body)
-
-	if err != nil {
-		return nil, err
-	}
-
-	return resp, nil
-}
-
 func requestAction(method string) func(c *cli.Context) error {
 	return func(c *cli.Context) error {
 		var params []byte
@@ -55,7 +39,15 @@ func requestAction(method string) func(c *cli.Context) error {
 			return cli.NewExitError(hostIsNotDefined, 0)
 		}
 
-		res, err := do(host, method, mhttp.GetTypeByAlias(mType), params)
+		req, err := mhttp.NewRequest(host, method, map[string]string{
+			"Content-Type": mhttp.GetTypeByAlias(mType),
+		})
+
+		if err != nil {
+			return cli.NewExitError(err, 0)
+		}
+
+		res, err := req.Do(params)
 
 		if err != nil {
 			return cli.NewExitError(err, 0)
@@ -65,6 +57,14 @@ func requestAction(method string) func(c *cli.Context) error {
 
 		if err != nil {
 			return cli.NewExitError(err, 0)
+		}
+
+		if c.Bool("request-info") {
+			requestInfo, _ := req.GetPrettyRequest()
+
+			fmt.Println(requestInfo)
+
+			return nil
 		}
 
 		fmt.Println(string(s))
@@ -96,11 +96,15 @@ func main() {
 			Flags: []cli.Flag{
 				cli.StringFlag{
 					Name:  "type, t",
-					Value: mhttp.GetTypeByAlias(mhttp.TypeJSON),
+					Value: mhttp.TypeJSON,
 				},
 
 				cli.BoolFlag{
 					Name: "interactive, i",
+				},
+
+				cli.BoolFlag{
+					Name: "request-info, ri",
 				},
 			},
 			Action: requestAction(http.MethodGet),
@@ -112,11 +116,15 @@ func main() {
 			Flags: []cli.Flag{
 				cli.StringFlag{
 					Name:  "type, t",
-					Value: mhttp.GetTypeByAlias(mhttp.TypeJSON),
+					Value: mhttp.TypeJSON,
 				},
 
 				cli.BoolFlag{
 					Name: "interactive, i",
+				},
+
+				cli.BoolFlag{
+					Name: "request-info, ri",
 				},
 			},
 			Action: requestAction(http.MethodPost),

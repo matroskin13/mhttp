@@ -1,8 +1,9 @@
 package mhttp
 
 import (
-	"github.com/stretchr/testify/assert"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func getParamsJSON(params []string) string {
