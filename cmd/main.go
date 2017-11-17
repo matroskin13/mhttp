@@ -129,6 +129,54 @@ func main() {
 			},
 			Action: requestAction(http.MethodPost),
 		},
+
+		{
+			Name:    "var",
+			Aliases: []string{"v"},
+			Subcommands: cli.Commands{
+				{
+					Name: "set",
+					Action: func(c *cli.Context) error {
+						config, err := mhttp.GetOrCreateConfig()
+
+						if err != nil {
+							return cli.NewExitError(err, 0)
+						}
+
+						key := c.Args().First()
+						value := c.Args().Get(1)
+
+						config.AddVar("", key, value)
+						config.Save()
+
+						return nil
+					},
+				},
+
+				{
+					Name: "get",
+					Action: func(c *cli.Context) error {
+						config, err := mhttp.GetOrCreateConfig()
+
+						if err != nil {
+							return cli.NewExitError(err, 0)
+						}
+
+						key := c.Args().First()
+
+						value, err := config.GetVar("", key)
+
+						if err != nil {
+							return cli.NewExitError(err, 0)
+						}
+
+						fmt.Println(value)
+
+						return nil
+					},
+				},
+			},
+		},
 	}
 
 	app.Run(os.Args)
