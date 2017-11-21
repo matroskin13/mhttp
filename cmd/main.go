@@ -39,9 +39,15 @@ func requestAction(method string) func(c *cli.Context) error {
 			return cli.NewExitError(hostIsNotDefined, 0)
 		}
 
-		req, err := mhttp.NewRequest(host, method, map[string]string{
-			"Content-Type": mhttp.GetTypeByAlias(mType),
-		})
+		headers, err := mhttp.PrependHeaders(c.StringSlice("headers"))
+
+		if err != nil {
+			return cli.NewExitError(err, 0)
+		}
+
+		headers["Content-Type"] = mhttp.GetTypeByAlias(mType)
+
+		req, err := mhttp.NewRequest(host, method, headers)
 
 		if err != nil {
 			return cli.NewExitError(err, 0)
@@ -89,44 +95,37 @@ func main() {
 	app.Description = "Command line HTTP client"
 	app.Version = "0.0.1"
 
+	requestFlags := []cli.Flag{
+		cli.StringFlag{
+			Name:  "type, t",
+			Value: mhttp.TypeJSON,
+		},
+
+		cli.BoolFlag{
+			Name: "interactive, i",
+		},
+
+		cli.BoolFlag{
+			Name: "request-info, ri",
+		},
+
+		cli.StringSliceFlag{
+			Name: "headers, H",
+		},
+	}
+
 	app.Commands = []cli.Command{
 		{
 			Name:    "get",
 			Aliases: []string{"g"},
-			Flags: []cli.Flag{
-				cli.StringFlag{
-					Name:  "type, t",
-					Value: mhttp.TypeJSON,
-				},
-
-				cli.BoolFlag{
-					Name: "interactive, i",
-				},
-
-				cli.BoolFlag{
-					Name: "request-info, ri",
-				},
-			},
+			Flags: requestFlags,
 			Action: requestAction(http.MethodGet),
 		},
 
 		{
 			Name:    "post",
 			Aliases: []string{"p"},
-			Flags: []cli.Flag{
-				cli.StringFlag{
-					Name:  "type, t",
-					Value: mhttp.TypeJSON,
-				},
-
-				cli.BoolFlag{
-					Name: "interactive, i",
-				},
-
-				cli.BoolFlag{
-					Name: "request-info, ri",
-				},
-			},
+			Flags: requestFlags,
 			Action: requestAction(http.MethodPost),
 		},
 

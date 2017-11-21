@@ -2,10 +2,12 @@ package mhttp
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"net/http"
 	"net/url"
+	"strings"
 )
 
 type Request struct {
@@ -26,6 +28,22 @@ const (
 	TypeHTML = "html"
 	TypeJSON = "json"
 )
+
+func PrependHeaders(cliHeaders []string) (map[string]string, error) {
+	headers := make(map[string]string)
+
+	for _, header := range cliHeaders {
+		items := strings.Split(header, ":")
+
+		if len(items) < 2 {
+			return headers, errors.New("headers is invalid")
+		}
+
+		headers[items[0]] = strings.TrimSpace(items[1])
+	}
+
+	return headers, nil
+}
 
 func GetTypeByAlias(alias string) string {
 	switch alias {
