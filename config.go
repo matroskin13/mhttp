@@ -2,11 +2,11 @@ package mhttp
 
 import (
 	"encoding/json"
+	"errors"
 	"io/ioutil"
 	"os"
 	"os/user"
 	"path"
-	"errors"
 )
 
 const Version = "0.0.1"
@@ -99,13 +99,29 @@ func (c *UserConfig) GetSpace(spaceName string) *Space {
 		}
 	}
 
-	return nil
+	space := Space{Name: spaceName, Variables: make(map[string]string)}
+
+	c.Spaces = append(c.Spaces, space)
+
+	return &space
 }
 
 func (c *UserConfig) AddVar(spaceName string, name string, value string) {
 	space := c.GetSpace(spaceName)
 
 	space.Variables[name] = value
+}
+
+func (c *UserConfig) AddJSONVar(spaceName string, name string, value interface{}) error {
+	jsonValue, err := json.Marshal(value)
+
+	if err != nil {
+		return err
+	}
+
+	c.AddVar(spaceName, name, string(jsonValue))
+
+	return nil
 }
 
 func (c *UserConfig) GetVar(spaceName string, name string) (string, error) {
