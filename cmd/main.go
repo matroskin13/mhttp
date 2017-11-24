@@ -38,6 +38,8 @@ func doAction(savedRequest *SavedRequest) error {
 		return cli.NewExitError(err, 0)
 	}
 
+	fmt.Println(string(res.BodyRaw))
+
 	s, err := prettyjson.Format(res.BodyRaw)
 
 	if err != nil {
@@ -69,7 +71,6 @@ func prependRequest(c *cli.Context, savedRequest *SavedRequest) error {
 	var requestBody []byte
 
 	host := c.Args().First()
-	mType := c.String("type")
 
 	savedRequest.Params = append(savedRequest.Params, c.Args().Tail()...)
 
@@ -97,7 +98,7 @@ func prependRequest(c *cli.Context, savedRequest *SavedRequest) error {
 		return cli.NewExitError(err, 0)
 	}
 
-	headers["Content-Type"] = mhttp.GetTypeByAlias(mType)
+	headers["Content-Type"] = mhttp.GetTypeByAlias(savedRequest.Type)
 
 	for key, h := range headers {
 		savedRequest.Headers[key] = h
