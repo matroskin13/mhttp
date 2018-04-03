@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
@@ -9,8 +10,7 @@ import (
 	"github.com/hokaccha/go-prettyjson"
 	"github.com/urfave/cli"
 
-	"encoding/json"
-	"mhttp"
+	"github.com/matroskin13/mhttp"
 )
 
 var hostIsNotDefined = errors.New("host is not defined")
@@ -38,12 +38,19 @@ func doAction(savedRequest *SavedRequest) error {
 		return cli.NewExitError(err, 0)
 	}
 
-	fmt.Println(string(res.BodyRaw))
+	var resp []byte
 
-	s, err := prettyjson.Format(res.BodyRaw)
+	switch req.Headers.Get("Content-Type") {
+	case "application/json":
+		s, err := prettyjson.Format(res.BodyRaw)
 
-	if err != nil {
-		return cli.NewExitError(err, 0)
+		if err != nil {
+			return cli.NewExitError(err, 0)
+		}
+
+		resp = s
+	default:
+		resp = res.BodyRaw
 	}
 
 	if flag, _ := savedRequest.Flags["request-info"]; flag {
@@ -54,7 +61,7 @@ func doAction(savedRequest *SavedRequest) error {
 		return nil
 	}
 
-	fmt.Println(string(s))
+	fmt.Println(string(resp))
 
 	if flag, _ := savedRequest.Flags["interactive"]; flag {
 		err := mhttp.InitInteractive(res.BodyRaw)
